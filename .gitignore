@@ -1,0 +1,5 @@
+# Entorno virtual de python
+# venv ignora la carpeta del entorno virtual
+# pycache ignora los archivos de caché o temporales de python
+venv/
+__pycache__/
