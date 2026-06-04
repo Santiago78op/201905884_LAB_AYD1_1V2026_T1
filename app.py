@@ -5,10 +5,10 @@ app = Flask(__name__)
 
 # Ruta de la aplicación
 @app.route('/home')
-def song_love():
+def album_love():
     name = "Santiago Barrera"
-    song = "Where is my mind?"
-    return f"Hola, soy {name} y mi canción favorita es {song}."
+    album = "Surfer Rosa"
+    return f"Hola, soy {name} y mi álbum favorito es {album}."
 
 # Ejecutar la aplicación
 if __name__ == '__main__':
