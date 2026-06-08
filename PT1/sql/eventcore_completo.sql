@@ -21,8 +21,8 @@ SET NOCOUNT ON;
 -- =============================================================================================
 -- 0. BASE DE DATOS  (idempotente, en una línea para no romper el parser sin GO)
 -- =============================================================================================
-IF DB_ID(N'EventCore') IS NULL CREATE DATABASE EventCore;
-USE EventCore;
+IF DB_ID(N'Cumbre') IS NULL CREATE DATABASE Cumbre;
+USE Cumbre;
 
 -- =============================================================================================
 -- 0.1 LIMPIEZA re-ejecutable — orden INVERSO a las FKs (primero hijos, al final padres)

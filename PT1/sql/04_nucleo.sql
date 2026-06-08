@@ -7,7 +7,7 @@
 -- Requiere: 02_lookups.sql y 03_catalogos_base.sql  ·  Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 -- ----------------- Eventos -----------------
 CREATE TABLE dbo.Eventos (

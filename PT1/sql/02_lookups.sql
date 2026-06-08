@@ -7,7 +7,7 @@
 -- Requiere: 01_database.sql  ·  Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 -- ----------------- Roles -----------------
 CREATE TABLE dbo.Roles (

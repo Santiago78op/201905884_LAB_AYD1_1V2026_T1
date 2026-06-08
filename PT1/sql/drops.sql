@@ -1,7 +1,7 @@
 -- =============================================================================================
 -- EVENTCORE · LIMPIEZA (DROP de todas las tablas)  ·  sin "GO"
 -- =============================================================================================
--- Qué hace: borra las 22 tablas de EventCore. Úsalo para "empezar de cero" antes de re-correr
+-- Qué hace: borra las 22 tablas de Cumbre. Úsalo para "empezar de cero" antes de re-correr
 --           el DDL, o para desmontar el esquema completo.
 --
 -- LA REGLA DE ORO DEL ORDEN:
@@ -11,10 +11,10 @@
 --
 --   `DROP TABLE IF EXISTS` = idempotente: si la tabla no existe, no falla (no rompe el script).
 --
--- CÓMO CORRERLO en DBeaver: posicioná la conexión en la base EventCore y ejecutá con Alt+X (⌥X).
+-- CÓMO CORRERLO en DBeaver: posicioná la conexión en la base Cumbre y ejecutá con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 -- ---- NIVEL HOJA: nadie depende de ellas, se borran primero -----------------------------------
 DROP TABLE IF EXISTS dbo.ConfirmacionesCorreo;    -- confirmación de correo; solo apunta a Usuarios
@@ -50,4 +50,4 @@ DROP TABLE IF EXISTS dbo.Roles;                   -- la referenciaba Usuarios
 
 -- Tip: si querés borrar TAMBIÉN la base entera, primero salí de ella y luego:
 --   USE master;
---   DROP DATABASE IF EXISTS EventCore;
+--   DROP DATABASE IF EXISTS Cumbre;

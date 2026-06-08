@@ -5,7 +5,7 @@
 -- Requiere: 03_catalogos_base.sql y 04_nucleo.sql  ·  Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 -- ----------------- Inscripciones -----------------
 CREATE TABLE dbo.Inscripciones (

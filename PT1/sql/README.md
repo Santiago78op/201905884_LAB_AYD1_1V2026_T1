@@ -18,7 +18,7 @@ cada tabla, qué significa cada campo, qué reglas garantiza el motor y por qué
 
 | # | Archivo | Crea / hace | Depende de |
 |--:|---------|-------------|------------|
-| 1 | `01_database.sql` | Crea la base `EventCore` y entra en ella | — |
+| 1 | `01_database.sql` | Crea la base `Cumbre` y entra en ella | — |
 | 2 | `02_lookups.sql` | `Roles`, 4× `Estados…`, `Dias`, `Horarios` | 01 |
 | 3 | `03_catalogos_base.sql` | `Usuarios`, `Ponentes`, `Salas`, `TiposEntrada` | 02 |
 | 4 | `04_nucleo.sql` | `Eventos`, `Sesiones`, `MaterialesRecurso` | 02, 03 |

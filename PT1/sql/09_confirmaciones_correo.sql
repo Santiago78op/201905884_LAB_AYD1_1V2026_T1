@@ -10,7 +10,7 @@
 -- Depende SOLO de Usuarios (creada en 03). No lleva seed. Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 CREATE TABLE dbo.ConfirmacionesCorreo (
     ConfirmacionID INT           NOT NULL IDENTITY(1,1),

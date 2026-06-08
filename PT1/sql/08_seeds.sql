@@ -6,7 +6,7 @@
 -- Requiere: 02_lookups.sql (las tablas deben existir)  ·  Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 INSERT INTO dbo.Roles (RolID, Codigo, Descripcion) VALUES
     (1, N'ADMIN',     N'Administrador de la plataforma'),

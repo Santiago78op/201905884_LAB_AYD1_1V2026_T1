@@ -5,7 +5,7 @@
 -- Requiere: 03_catalogos_base.sql y 05_inscripciones.sql  ·  Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 -- ----------------- Tarjetas -----------------
 CREATE TABLE dbo.Tarjetas (

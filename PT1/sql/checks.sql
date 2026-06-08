@@ -13,10 +13,10 @@
 --             de pago, tipo de tarjeta) y para REGLAS NUMÉRICAS/DE FECHA. Los conjuntos que SÍ
 --             pueden crecer (estados, roles) NO van en CHECK: van en tablas lookup con FK.
 --
--- CÓMO CORRERLO en DBeaver: conexión sobre EventCore, ejecutar con Alt+X (⌥X).
+-- CÓMO CORRERLO en DBeaver: conexión sobre Cumbre, ejecutar con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 -- ---- Dias --------------------------------------------------------------------------------------
 -- El día de la semana solo puede ser 1..7 (1 = Lunes … 7 = Domingo, ISO-8601). Blinda el catálogo.

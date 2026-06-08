@@ -7,7 +7,7 @@
 -- Requiere: 02_lookups.sql  ·  Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 -- ----------------- Usuarios (Administrador / Asistente, distinguidos por RolID) -----------------
 CREATE TABLE dbo.Usuarios (

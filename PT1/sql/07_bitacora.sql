@@ -6,7 +6,7 @@
 -- Requiere: 03_catalogos_base.sql (Usuarios)  ·  Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-USE EventCore;
+USE Cumbre;
 
 CREATE TABLE dbo.LogActividad (
     LogID           BIGINT         NOT NULL IDENTITY(1,1),

@@ -7,8 +7,8 @@
 -- Correr con Alt+X (⌥X).
 -- =============================================================================================
 
-IF DB_ID(N'EventCore') IS NULL CREATE DATABASE EventCore;
+IF DB_ID(N'Cumbre') IS NULL CREATE DATABASE Cumbre;
 
-USE EventCore;
+USE Cumbre;
 
-SELECT DB_NAME() AS BaseDeDatosActual;   -- debe devolver 'EventCore'
+SELECT DB_NAME() AS BaseDeDatosActual;   -- debe devolver 'Cumbre'
