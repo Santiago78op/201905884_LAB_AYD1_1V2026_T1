@@ -1,6 +1,6 @@
 # EVENTCORE — Relaciones (foráneas, cardinalidades y diagrama ER)
 
-> Cómo se conectan las **21 tablas**: **26 llaves foráneas** y **1 relación N:M**.
+> Cómo se conectan las **22 tablas**: **27 llaves foráneas** y **1 relación N:M**.
 > Coincide 1:1 con los scripts de `sql/`. El detalle de campos/tipos está en `eventcore-tablas.md`.
 
 ---
@@ -21,7 +21,7 @@
 
 Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**”*.
 
-### FKs de negocio (19)
+### FKs de negocio (20)
 
 | # | Tabla hijo (lleva la FK) | Columna FK | → Tabla padre | → PK padre | ¿Opcional? | Borrado | Para qué sirve |
 |--:|--------------------------|------------|---------------|-----------|:--:|--------|----------------|
@@ -44,22 +44,23 @@ Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**�
 | 17 | `SolicitudesCancelacion` | `InscripcionID` | `Inscripciones` | `InscripcionID` | No | — | qué inscripción se cancela |
 | 18 | `SolicitudesCancelacion` | `AdminProcesadorID` | `Usuarios` | `UsuarioID` | **Sí** | — | admin que procesa reembolso |
 | 19 | `LogActividad` | `UsuarioID` | `Usuarios` | `UsuarioID` | **Sí** | — | NULL si la acción es del sistema |
+| 20 | `ConfirmacionesCorreo` | `UsuarioID` | `Usuarios` | `UsuarioID` | No | — | dueño del token de confirmación |
 
 ### FKs hacia las lookup / catálogo (7)
 
 | # | Tabla hijo | Columna FK | → Tabla lookup | → PK padre | ¿Opcional? | Default |
 |--:|------------|------------|----------------|-----------|:--:|---------|
-| 20 | `Usuarios` | `RolID` | `Roles` | `RolID` | No | — |
-| 21 | `Eventos` | `EstadoEventoID` | `EstadosEvento` | `EstadoEventoID` | No | `1` = BORRADOR |
-| 22 | `Inscripciones` | `EstadoInscripcionID` | `EstadosInscripcion` | `EstadoInscripcionID` | No | `1` = PENDIENTE |
-| 23 | `Pagos` | `EstadoPagoID` | `EstadosPago` | `EstadoPagoID` | No | `1` = PENDIENTE |
-| 24 | `SolicitudesCancelacion` | `EstadoSolicitudID` | `EstadosSolicitud` | `EstadoSolicitudID` | No | `1` = PENDIENTE |
-| 25 | `Sesiones` | `DiaID` | `Dias` | `DiaID` | No | — |
-| 26 | `Sesiones` | `HorarioID` | `Horarios` | `HorarioID` | No | — |
+| 21 | `Usuarios` | `RolID` | `Roles` | `RolID` | No | — |
+| 22 | `Eventos` | `EstadoEventoID` | `EstadosEvento` | `EstadoEventoID` | No | `1` = BORRADOR |
+| 23 | `Inscripciones` | `EstadoInscripcionID` | `EstadosInscripcion` | `EstadoInscripcionID` | No | `1` = PENDIENTE |
+| 24 | `Pagos` | `EstadoPagoID` | `EstadosPago` | `EstadoPagoID` | No | `1` = PENDIENTE |
+| 25 | `SolicitudesCancelacion` | `EstadoSolicitudID` | `EstadosSolicitud` | `EstadoSolicitudID` | No | `1` = PENDIENTE |
+| 26 | `Sesiones` | `DiaID` | `Dias` | `DiaID` | No | — |
+| 27 | `Sesiones` | `HorarioID` | `Horarios` | `HorarioID` | No | — |
 
-**Total: 26 llaves foráneas.**
+**Total: 27 llaves foráneas.**
 
-> `Usuarios` es la tabla más “apuntada”: recibe **7 FKs** de negocio (#1, 6, 12, 13, 16, 18, 19).
+> `Usuarios` es la tabla más “apuntada”: recibe **8 FKs** de negocio (#1, 6, 12, 13, 16, 18, 19, 20).
 > Cada lookup recibe solo 1.
 
 ---
@@ -79,18 +80,19 @@ Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**�
 - **`Pagos`** → `Inscripciones`, `Tarjetas` *(op.)*, `Usuarios` (revisor, op.), `EstadosPago`
 - **`SolicitudesCancelacion`** → `Inscripciones`, `Usuarios` (procesador, op.), `EstadosSolicitud`
 - **`LogActividad`** → `Usuarios` *(opcional)*
+- **`ConfirmacionesCorreo`** → `Usuarios`
 
 **Flechas que ENTRAN** (cuántas FK recibe cada tabla):
 
 | Tabla padre | Recibe FK desde | Total |
 |-------------|-----------------|:--:|
-| `Usuarios` | Eventos, Inscripciones, CodigosInvitacion, Tarjetas, Pagos, SolicitudesCancelacion, LogActividad | **7** |
+| `Usuarios` | Eventos, Inscripciones, CodigosInvitacion, Tarjetas, Pagos, SolicitudesCancelacion, LogActividad, ConfirmacionesCorreo | **8** |
 | `Eventos` | Sesiones, Inscripciones, CodigosInvitacion | **3** |
 | `Inscripciones` | InscripcionSesion, Pagos, SolicitudesCancelacion | **3** |
 | `Sesiones` | MaterialesRecurso, InscripcionSesion | **2** |
 | `TiposEntrada` · `Ponentes` · `Salas` · `Tarjetas` · `Dias` · `Horarios` | (una cada una) | **1** c/u |
 | `Roles` · `EstadosEvento` · `EstadosInscripcion` · `EstadosPago` · `EstadosSolicitud` | (una cada una) | **1** c/u |
-| `MaterialesRecurso`, `InscripcionSesion`, `CodigosInvitacion`, `LogActividad` | nadie | **0** (hojas) |
+| `MaterialesRecurso`, `InscripcionSesion`, `CodigosInvitacion`, `LogActividad`, `ConfirmacionesCorreo` | nadie | **0** (hojas) |
 
 ---
 
@@ -122,6 +124,7 @@ Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**�
 | `Usuarios`(procesador) procesa `SolicitudesCancelacion` | 0..1 ──< N | `SolicitudesCancelacion.AdminProcesadorID` (op.) |
 | `EstadosSolicitud` clasifica `SolicitudesCancelacion` | 1 ──< N | `SolicitudesCancelacion.EstadoSolicitudID` |
 | `Usuarios` genera `LogActividad` | 0..1 ──< N | `LogActividad.UsuarioID` (opcional) |
+| `Usuarios` tiene `ConfirmacionesCorreo` | 1 ──< N | `ConfirmacionesCorreo.UsuarioID` |
 | **`Inscripciones` ↔ `Sesiones`** | **N : M** | resuelta con `InscripcionSesion` |
 
 > **La única N:M:** un asistente (vía su inscripción) entra a varias sesiones, y una sesión recibe
@@ -169,6 +172,7 @@ erDiagram
     Usuarios |o--o{ SolicitudesCancelacion : "procesa (opcional)"
 
     Usuarios |o--o{ LogActividad : "genera"
+    Usuarios ||--o{ ConfirmacionesCorreo : "confirma correo"
 ```
 
 > **Cómo leer las líneas:** el extremo `||` (barrita doble) es el lado “uno”; el extremo `o{`
@@ -192,6 +196,7 @@ Una tabla no puede tener FK a otra que aún no existe. Orden seguro (= orden del
 9. `Pagos` (→ `Inscripciones`, `Tarjetas`, `Usuarios`, `EstadosPago`)
 10. `SolicitudesCancelacion` (→ `Inscripciones`, `Usuarios`, `EstadosSolicitud`)
 11. `LogActividad` (→ `Usuarios`)
+12. `ConfirmacionesCorreo` (→ `Usuarios`)
 
 ---
 

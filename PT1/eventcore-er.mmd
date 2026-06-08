@@ -30,6 +30,7 @@ erDiagram
     Usuarios |o--o{ SolicitudesCancelacion : "procesa (opcional)"
 
     Usuarios |o--o{ LogActividad : "genera"
+    Usuarios ||--o{ ConfirmacionesCorreo : "confirma correo"
 
     Roles {
         tinyint RolID PK
@@ -202,4 +203,13 @@ erDiagram
         nvarchar EntidadAfectada
         nvarchar Descripcion "NULL"
         datetime2 FechaHora
+    }
+    ConfirmacionesCorreo {
+        int ConfirmacionID PK
+        int UsuarioID FK
+        nvarchar Token UK
+        datetime2 FechaCreacion
+        datetime2 FechaExpira
+        bit Usado
+        datetime2 FechaUso "NULL"
     }

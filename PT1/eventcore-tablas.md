@@ -1,6 +1,6 @@
 # EVENTCORE — Tablas y campos
 
-> Diccionario de datos de las **21 tablas** (14 de negocio + 7 lookup/catálogo). Coincide 1:1 con
+> Diccionario de datos de las **22 tablas** (15 de negocio + 7 lookup/catálogo). Coincide 1:1 con
 > los scripts de `sql/`. Motor: **SQL Server 2016+**, schema `dbo`.
 > Las **relaciones** (FKs, cardinalidades, diagrama ER) están en `eventcore-relaciones.md`.
 
@@ -278,3 +278,22 @@
 | `EntidadAfectada` | NVARCHAR(50) | No | — | — | qué tabla/registro |
 | `Descripcion` | NVARCHAR(500) | **Sí** | — | — | detalle opcional |
 | `FechaHora` | DATETIME2(0) | No | — | DEFAULT `SYSUTCDATETIME()` | |
+
+---
+
+## 7. Confirmación de correo (soporte de signup/login)
+
+**`ConfirmacionesCorreo`**  ·  *token de verificación para "confirmar correo antes de iniciar sesión"*
+
+| Campo | Tipo | Nulo | Clave | Regla | Notas |
+|-------|------|:--:|-------|-------|-------|
+| `ConfirmacionID` | INT IDENTITY | No | **PK** | — | |
+| `UsuarioID` | INT | No | **FK** | → `Usuarios` | dueño del token |
+| `Token` | NVARCHAR(100) | No | **UQ** | — | código aleatorio enviado por correo |
+| `FechaCreacion` | DATETIME2(0) | No | — | DEFAULT `SYSUTCDATETIME()` | |
+| `FechaExpira` | DATETIME2(0) | No | **CK** | `FechaExpira > FechaCreacion` | el backend la fija (ej. +24h) |
+| `Usado` | BIT | No | — | DEFAULT `0` | `1` cuando ya se confirmó |
+| `FechaUso` | DATETIME2(0) | **Sí** | — | — | cuándo se confirmó (NULL si aún no) |
+
+> Al validar el token: `Usado = 1`, `FechaUso = ahora` y `Usuarios.CorreoConfirmado = 1`.
+> "Reenviar verificación" = insertar otra fila (se admiten varias por usuario).

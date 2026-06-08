@@ -4,7 +4,7 @@
 > los scripts de `sql/`**: mismos nombres de tabla y columna (PascalCase, plural), mismos tipos,
 > mismas FKs. Motor: **SQL Server 2016+**, schema `dbo`.
 >
-> **21 tablas = 14 de negocio + 7 lookup/catálogo · 26 llaves foráneas · 1 relación N:M.**
+> **22 tablas = 15 de negocio + 7 lookup/catálogo · 27 llaves foráneas · 1 relación N:M.**
 
 ---
 
@@ -41,7 +41,7 @@ Estas marcas se usan en TODO el documento, sobre todo en las tablas de campos (�
 
 ---
 
-## 0. Las 21 entidades, agrupadas
+## 0. Las 22 entidades, agrupadas
 
 Las **lookup** son la forma normalizada de los enums de *estado/rol* (en vez de `CHECK IN(...)`):
 son extensibles y traen `EsTerminal` para marcar estados cerrados. Los enums **fijos** (modalidad,
@@ -57,6 +57,7 @@ columna porque no cambian con el tiempo.
 | **Inscripciones** | `Inscripciones`, `InscripcionSesion`, `CodigosInvitacion` | Sí |
 | **Pagos / cancelaciones** | `Tarjetas`, `Pagos`, `SolicitudesCancelacion` | Sí |
 | **Bitácora** | `LogActividad` | Sí (a `Usuarios`) |
+| **Soporte de auth** | `ConfirmacionesCorreo` | Sí (a `Usuarios`) |
 
 > Para empezar a dibujar, arranca por las cajas que **no dependen de nadie**: las 5 lookup +
 > `Ponentes`, `Salas`, `TiposEntrada`. Desde ahí van saliendo las flechas hacia el resto.
@@ -109,6 +110,7 @@ erDiagram
 
     %% ---------- BITACORA ----------
     Usuarios |o--o{ LogActividad : "genera"
+    Usuarios ||--o{ ConfirmacionesCorreo : "confirma correo"
 
     %% =================== ENTIDADES ===================
     Roles {
@@ -283,6 +285,15 @@ erDiagram
         nvarchar Descripcion "NULL"
         datetime2 FechaHora
     }
+    ConfirmacionesCorreo {
+        int ConfirmacionID PK
+        int UsuarioID FK
+        nvarchar Token UK
+        datetime2 FechaCreacion
+        datetime2 FechaExpira
+        bit Usado
+        datetime2 FechaUso "NULL"
+    }
 ```
 
 > **Cómo leer las líneas:** el extremo `||` (una barrita doble) es el lado “uno”; el extremo `o{`
@@ -297,7 +308,7 @@ erDiagram
 Cada fila es **una FK**: *“la columna de la tabla **hijo** apunta al PK de la tabla **padre**”*.
 La FK siempre vive en el hijo (lado “muchos”).
 
-### FKs de negocio (19)
+### FKs de negocio (20)
 
 | # | Tabla hijo (lleva la FK) | Columna FK | → Tabla padre | → PK padre | ¿Opcional? | Borrado | Para qué sirve |
 |--:|--------------------------|------------|---------------|-----------|:--:|--------|----------------|
@@ -320,22 +331,23 @@ La FK siempre vive en el hijo (lado “muchos”).
 | 17 | `SolicitudesCancelacion` | `InscripcionID` | `Inscripciones` | `InscripcionID` | No | — | qué inscripción se cancela |
 | 18 | `SolicitudesCancelacion` | `AdminProcesadorID` | `Usuarios` | `UsuarioID` | **Sí** | — | admin que procesa reembolso |
 | 19 | `LogActividad` | `UsuarioID` | `Usuarios` | `UsuarioID` | **Sí** | — | NULL si la acción es del sistema |
+| 20 | `ConfirmacionesCorreo` | `UsuarioID` | `Usuarios` | `UsuarioID` | No | — | dueño del token de confirmación |
 
 ### FKs hacia las lookup / catálogo (7)
 
 | # | Tabla hijo | Columna FK | → Tabla lookup | → PK padre | ¿Opcional? | Default |
 |--:|------------|------------|----------------|-----------|:--:|---------|
-| 20 | `Usuarios` | `RolID` | `Roles` | `RolID` | No | — |
-| 21 | `Eventos` | `EstadoEventoID` | `EstadosEvento` | `EstadoEventoID` | No | `1` = BORRADOR |
-| 22 | `Inscripciones` | `EstadoInscripcionID` | `EstadosInscripcion` | `EstadoInscripcionID` | No | `1` = PENDIENTE |
-| 23 | `Pagos` | `EstadoPagoID` | `EstadosPago` | `EstadoPagoID` | No | `1` = PENDIENTE |
-| 24 | `SolicitudesCancelacion` | `EstadoSolicitudID` | `EstadosSolicitud` | `EstadoSolicitudID` | No | `1` = PENDIENTE |
-| 25 | `Sesiones` | `DiaID` | `Dias` | `DiaID` | No | — |
-| 26 | `Sesiones` | `HorarioID` | `Horarios` | `HorarioID` | No | — |
+| 21 | `Usuarios` | `RolID` | `Roles` | `RolID` | No | — |
+| 22 | `Eventos` | `EstadoEventoID` | `EstadosEvento` | `EstadoEventoID` | No | `1` = BORRADOR |
+| 23 | `Inscripciones` | `EstadoInscripcionID` | `EstadosInscripcion` | `EstadoInscripcionID` | No | `1` = PENDIENTE |
+| 24 | `Pagos` | `EstadoPagoID` | `EstadosPago` | `EstadoPagoID` | No | `1` = PENDIENTE |
+| 25 | `SolicitudesCancelacion` | `EstadoSolicitudID` | `EstadosSolicitud` | `EstadoSolicitudID` | No | `1` = PENDIENTE |
+| 26 | `Sesiones` | `DiaID` | `Dias` | `DiaID` | No | — |
+| 27 | `Sesiones` | `HorarioID` | `Horarios` | `HorarioID` | No | — |
 
-**Total: 26 llaves foráneas.**
+**Total: 27 llaves foráneas.**
 
-> `Usuarios` es la tabla más “apuntada”: recibe **7 FKs** de negocio (#1, 6, 12, 13, 16, 18, 19).
+> `Usuarios` es la tabla más “apuntada”: recibe **8 FKs** de negocio (#1, 6, 12, 13, 16, 18, 19, 20).
 > Cada lookup recibe solo 1. En el diagrama, dibuja las lookup como cajitas pequeñas al borde.
 
 ---
@@ -355,18 +367,19 @@ La FK siempre vive en el hijo (lado “muchos”).
 - **`Pagos`** → `Inscripciones`, `Tarjetas` *(op.)*, `Usuarios` (revisor, op.), `EstadosPago`
 - **`SolicitudesCancelacion`** → `Inscripciones`, `Usuarios` (procesador, op.), `EstadosSolicitud`
 - **`LogActividad`** → `Usuarios` *(opcional)*
+- **`ConfirmacionesCorreo`** → `Usuarios`
 
 **Flechas que ENTRAN** (cuántas FK recibe cada tabla):
 
 | Tabla padre | Recibe FK desde | Total |
 |-------------|-----------------|:--:|
-| `Usuarios` | Eventos, Inscripciones, CodigosInvitacion, Tarjetas, Pagos, SolicitudesCancelacion, LogActividad | **7** |
+| `Usuarios` | Eventos, Inscripciones, CodigosInvitacion, Tarjetas, Pagos, SolicitudesCancelacion, LogActividad, ConfirmacionesCorreo | **8** |
 | `Eventos` | Sesiones, Inscripciones, CodigosInvitacion | **3** |
 | `Inscripciones` | InscripcionSesion, Pagos, SolicitudesCancelacion | **3** |
 | `Sesiones` | MaterialesRecurso, InscripcionSesion | **2** |
 | `TiposEntrada` · `Ponentes` · `Salas` · `Tarjetas` · `Dias` · `Horarios` | (una cada una) | **1** c/u |
 | `Roles` · `EstadosEvento` · `EstadosInscripcion` · `EstadosPago` · `EstadosSolicitud` | (una cada una) | **1** c/u |
-| `MaterialesRecurso`, `InscripcionSesion`, `CodigosInvitacion`, `LogActividad` | nadie | **0** (hojas) |
+| `MaterialesRecurso`, `InscripcionSesion`, `CodigosInvitacion`, `LogActividad`, `ConfirmacionesCorreo` | nadie | **0** (hojas) |
 
 ---
 
@@ -401,6 +414,7 @@ La FK siempre vive en el hijo (lado “muchos”).
 | `Usuarios`(procesador) procesa `SolicitudesCancelacion` | 0..1 ──< N | `SolicitudesCancelacion.AdminProcesadorID` (op.) |
 | `EstadosSolicitud` clasifica `SolicitudesCancelacion` | 1 ──< N | `SolicitudesCancelacion.EstadoSolicitudID` |
 | `Usuarios` genera `LogActividad` | 0..1 ──< N | `LogActividad.UsuarioID` (opcional) |
+| `Usuarios` tiene `ConfirmacionesCorreo` | 1 ──< N | `ConfirmacionesCorreo.UsuarioID` |
 | **`Inscripciones` ↔ `Sesiones`** | **N : M** | resuelta con `InscripcionSesion` |
 
 > **La única N:M:** un asistente (vía su inscripción) entra a varias sesiones, y una sesión recibe
@@ -650,6 +664,20 @@ La FK siempre vive en el hijo (lado “muchos”).
 | `Descripcion` | NVARCHAR(500) | **Sí** | — | — | detalle opcional |
 | `FechaHora` | DATETIME2(0) | No | — | DEFAULT `SYSUTCDATETIME()` | |
 
+### 4.7 Confirmación de correo (soporte de signup/login)
+
+**`ConfirmacionesCorreo`**  ·  *token de verificación para "confirmar correo antes de iniciar sesión"*
+
+| Campo | Tipo | Nulo | Clave | Refiere a / Regla | Notas |
+|-------|------|:--:|-------|-------------------|-------|
+| `ConfirmacionID` | INT IDENTITY | No | **PK** | — | |
+| `UsuarioID` | INT | No | **FK** | → `Usuarios` | dueño del token |
+| `Token` | NVARCHAR(100) | No | **UQ** | — | código enviado por correo |
+| `FechaCreacion` | DATETIME2(0) | No | — | DEFAULT `SYSUTCDATETIME()` | |
+| `FechaExpira` | DATETIME2(0) | No | **CK** | `FechaExpira > FechaCreacion` | la fija el backend (ej. +24h) |
+| `Usado` | BIT | No | — | DEFAULT `0` | `1` cuando ya se confirmó |
+| `FechaUso` | DATETIME2(0) | **Sí** | — | — | cuándo se confirmó |
+
 ---
 
 ## 5. Orden de creación (sin romper FKs)
@@ -667,6 +695,7 @@ Una tabla no puede tener FK a otra que aún no existe. Este es el orden seguro (
 9. `Pagos` (→ `Inscripciones`, `Tarjetas`, `Usuarios`, `EstadosPago`)
 10. `SolicitudesCancelacion` (→ `Inscripciones`, `Usuarios`, `EstadosSolicitud`)
 11. `LogActividad` (→ `Usuarios`)
+12. `ConfirmacionesCorreo` (→ `Usuarios`)
 
 ---
 

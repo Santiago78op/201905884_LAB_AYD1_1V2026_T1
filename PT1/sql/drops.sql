@@ -1,7 +1,7 @@
 -- =============================================================================================
 -- EVENTCORE · LIMPIEZA (DROP de todas las tablas)  ·  sin "GO"
 -- =============================================================================================
--- Qué hace: borra las 21 tablas de EventCore. Úsalo para "empezar de cero" antes de re-correr
+-- Qué hace: borra las 22 tablas de EventCore. Úsalo para "empezar de cero" antes de re-correr
 --           el DDL, o para desmontar el esquema completo.
 --
 -- LA REGLA DE ORO DEL ORDEN:
@@ -17,6 +17,7 @@
 USE EventCore;
 
 -- ---- NIVEL HOJA: nadie depende de ellas, se borran primero -----------------------------------
+DROP TABLE IF EXISTS dbo.ConfirmacionesCorreo;    -- confirmación de correo; solo apunta a Usuarios
 DROP TABLE IF EXISTS dbo.LogActividad;            -- bitácora; solo apunta a Usuarios (nadie la referencia)
 DROP TABLE IF EXISTS dbo.SolicitudesCancelacion;  -- hija de Inscripciones / Usuarios / EstadosSolicitud
 DROP TABLE IF EXISTS dbo.Pagos;                   -- hija de Inscripciones / Tarjetas / Usuarios / EstadosPago

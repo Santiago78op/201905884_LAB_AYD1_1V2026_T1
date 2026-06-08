@@ -101,6 +101,11 @@ ALTER TABLE dbo.Pagos ADD CONSTRAINT CK_Pagos_Monto CHECK (Monto >= 0);
 ALTER TABLE dbo.SolicitudesCancelacion DROP CONSTRAINT IF EXISTS CK_SolicitudesCancelacion_Monto;
 ALTER TABLE dbo.SolicitudesCancelacion ADD CONSTRAINT CK_SolicitudesCancelacion_Monto CHECK (MontoReembolso >= 0);
 
+-- ---- ConfirmacionesCorreo ----------------------------------------------------------------------
+-- Un token de confirmación no puede vencer antes (ni igual) de cuando se creó.
+ALTER TABLE dbo.ConfirmacionesCorreo DROP CONSTRAINT IF EXISTS CK_ConfirmacionesCorreo_Fechas;
+ALTER TABLE dbo.ConfirmacionesCorreo ADD CONSTRAINT CK_ConfirmacionesCorreo_Fechas CHECK (FechaExpira > FechaCreacion);
+
 -- =============================================================================================
 -- Verificación: lista todos los CHECK del esquema y su definición.
 -- =============================================================================================
