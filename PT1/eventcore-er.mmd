@@ -1,0 +1,192 @@
+erDiagram
+    Roles ||--o{ Usuarios : "clasifica"
+    EstadosEvento ||--o{ Eventos : "estado"
+    EstadosInscripcion ||--o{ Inscripciones : "estado"
+    EstadosPago ||--o{ Pagos : "estado"
+    EstadosSolicitud ||--o{ SolicitudesCancelacion : "estado"
+
+    Usuarios ||--o{ Eventos : "crea (admin)"
+    Eventos ||--o{ Sesiones : "contiene"
+    Ponentes ||--o{ Sesiones : "imparte"
+    Salas |o--o{ Sesiones : "alberga (opcional)"
+    Sesiones ||--o{ MaterialesRecurso : "tiene (cascade)"
+
+    Usuarios ||--o{ Inscripciones : "realiza (asistente)"
+    Eventos ||--o{ Inscripciones : "recibe"
+    TiposEntrada ||--o{ Inscripciones : "tarifa"
+    Eventos ||--o{ CodigosInvitacion : "emite"
+    Usuarios |o--o{ CodigosInvitacion : "canjea (opcional)"
+
+    Inscripciones ||--o{ InscripcionSesion : "puente"
+    Sesiones ||--o{ InscripcionSesion : "puente"
+
+    Usuarios ||--o{ Tarjetas : "registra"
+    Inscripciones ||--o{ Pagos : "genera"
+    Tarjetas |o--o{ Pagos : "usa (opcional)"
+    Usuarios |o--o{ Pagos : "revisa (opcional)"
+    Inscripciones ||--o{ SolicitudesCancelacion : "tiene"
+    Usuarios |o--o{ SolicitudesCancelacion : "procesa (opcional)"
+
+    Usuarios |o--o{ LogActividad : "genera"
+
+    Roles {
+        tinyint RolID PK
+        nvarchar Codigo UK
+        nvarchar Descripcion
+    }
+    EstadosEvento {
+        tinyint EstadoEventoID PK
+        nvarchar Codigo UK
+        nvarchar Descripcion
+        bit EsTerminal
+    }
+    EstadosInscripcion {
+        tinyint EstadoInscripcionID PK
+        nvarchar Codigo UK
+        nvarchar Descripcion
+        bit EsTerminal
+    }
+    EstadosPago {
+        tinyint EstadoPagoID PK
+        nvarchar Codigo UK
+        nvarchar Descripcion
+        bit EsTerminal
+    }
+    EstadosSolicitud {
+        tinyint EstadoSolicitudID PK
+        nvarchar Codigo UK
+        nvarchar Descripcion
+        bit EsTerminal
+    }
+    Usuarios {
+        int UsuarioID PK
+        tinyint RolID FK
+        nvarchar NombreCompleto
+        nvarchar Correo UK
+        nvarchar Contrasena
+        nvarchar Telefono
+        nvarchar Organizacion
+        nvarchar Cargo "NULL"
+        nvarchar PaisResidencia
+        nvarchar FotoPerfil
+        bit CorreoConfirmado
+        bit Activo
+    }
+    Ponentes {
+        int PonenteID PK
+        nvarchar NombreCompleto
+        nvarchar CorreoContacto
+        nvarchar Fotografia
+        nvarchar Biografia
+        nvarchar AreaEspecializacion
+        nvarchar Organizacion "NULL"
+        nvarchar WebRedes "NULL"
+        bit Activo
+    }
+    Salas {
+        int SalaID PK
+        nvarchar Nombre
+        nvarchar Ubicacion
+        int Capacidad
+        bit Activo
+    }
+    TiposEntrada {
+        tinyint TipoEntradaID PK
+        nvarchar Nombre UK
+        nvarchar Descripcion
+        decimal Tarifa
+        nvarchar Disponibilidad
+        bit Activo
+    }
+    Eventos {
+        int EventoID PK
+        int AdminID FK
+        tinyint EstadoEventoID FK
+        nvarchar Nombre
+        nvarchar Descripcion
+        datetime2 FechaInicio
+        datetime2 FechaFin
+        nvarchar Modalidad
+        nvarchar Ubicacion "NULL"
+        nvarchar EnlaceTransmision "NULL"
+        nvarchar Categoria
+        nvarchar ImagenBanner
+        int CapacidadMaxima
+        nvarchar ModalidadInscripcion
+        bit EsPago
+    }
+    Sesiones {
+        int SesionID PK
+        int EventoID FK
+        int PonenteID FK
+        int SalaID FK "NULL"
+        nvarchar Titulo
+        nvarchar Enlace "NULL"
+        datetime2 FechaHoraInicio
+        datetime2 FechaHoraFin
+        int CupoMaximo
+    }
+    MaterialesRecurso {
+        int MaterialID PK
+        int SesionID FK
+        nvarchar Nombre
+        nvarchar UrlArchivo
+    }
+    Inscripciones {
+        int InscripcionID PK
+        int AsistenteID FK
+        int EventoID FK
+        tinyint TipoEntradaID FK
+        tinyint EstadoInscripcionID FK
+        datetime2 FechaInscripcion
+        decimal Monto
+    }
+    InscripcionSesion {
+        int InscripcionID PK,FK
+        int SesionID PK,FK
+        datetime2 FechaRegistro
+    }
+    CodigosInvitacion {
+        int CodigoID PK
+        int EventoID FK
+        int AsistenteID FK "NULL"
+        nvarchar Codigo UK
+        nvarchar CorreoDestinatario
+        bit Usado
+    }
+    Tarjetas {
+        int TarjetaID PK
+        int AsistenteID FK
+        nvarchar Titular
+        nvarchar NumeroEnmascarado
+        nvarchar Tipo
+        nvarchar FechaExpiracion
+    }
+    Pagos {
+        int PagoID PK
+        int InscripcionID FK
+        int TarjetaID FK "NULL"
+        int AdminRevisorID FK "NULL"
+        tinyint EstadoPagoID FK
+        decimal Monto
+        nvarchar Metodo
+        datetime2 FechaPago
+        nvarchar ComprobanteUrl "NULL"
+    }
+    SolicitudesCancelacion {
+        int SolicitudID PK
+        int InscripcionID FK
+        int AdminProcesadorID FK "NULL"
+        tinyint EstadoSolicitudID FK
+        datetime2 FechaSolicitud
+        decimal MontoReembolso
+        nvarchar ComprobantePdfUrl "NULL"
+    }
+    LogActividad {
+        bigint LogID PK
+        int UsuarioID FK "NULL"
+        nvarchar Accion
+        nvarchar EntidadAfectada
+        nvarchar Descripcion "NULL"
+        datetime2 FechaHora
+    }

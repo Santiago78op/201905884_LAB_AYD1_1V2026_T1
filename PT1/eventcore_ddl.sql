@@ -7,7 +7,8 @@
 --               todas las claves foráneas, tablas lookup para los estados (en vez de CHECK IN)
 --               y borrado lógico (Activo) en los catálogos maestros.
 -- Motor       : SQL Server 2016 o superior.
--- Modelo base : entidades-y-foraneas.md  (14 entidades + 5 tablas lookup de estados/rol)
+-- Modelo base : eventcore-tablas.md + eventcore-relaciones.md (14 entidades + 5 lookup, 24 FKs).
+-- Re-ejecutable: la §0.1 borra las tablas en orden inverso a las FKs, así el script corre N veces.
 --
 -- Buenas prácticas aplicadas (curso SQL Server para Analistas de Datos):
 --   §8  CREATE TABLE: toda tabla con PK, NOT NULL y restricciones explícitas.
@@ -37,6 +38,31 @@ GO
 USE EventCore;
 GO
 SELECT DB_NAME() AS BaseDeDatosActual;
+GO
+
+-- =============================================================================================
+-- 0.1 LIMPIEZA (re-ejecutable) — se borran en ORDEN INVERSO a las FKs: primero los hijos.
+--     Si una tabla no existe, DROP ... IF EXISTS no falla. Comentá este bloque en producción.
+-- =============================================================================================
+DROP TABLE IF EXISTS dbo.LogActividad;
+DROP TABLE IF EXISTS dbo.SolicitudesCancelacion;
+DROP TABLE IF EXISTS dbo.Pagos;
+DROP TABLE IF EXISTS dbo.InscripcionSesion;
+DROP TABLE IF EXISTS dbo.CodigosInvitacion;
+DROP TABLE IF EXISTS dbo.Tarjetas;
+DROP TABLE IF EXISTS dbo.Inscripciones;
+DROP TABLE IF EXISTS dbo.MaterialesRecurso;
+DROP TABLE IF EXISTS dbo.Sesiones;
+DROP TABLE IF EXISTS dbo.Eventos;
+DROP TABLE IF EXISTS dbo.TiposEntrada;
+DROP TABLE IF EXISTS dbo.Salas;
+DROP TABLE IF EXISTS dbo.Ponentes;
+DROP TABLE IF EXISTS dbo.Usuarios;
+DROP TABLE IF EXISTS dbo.EstadosSolicitud;
+DROP TABLE IF EXISTS dbo.EstadosPago;
+DROP TABLE IF EXISTS dbo.EstadosInscripcion;
+DROP TABLE IF EXISTS dbo.EstadosEvento;
+DROP TABLE IF EXISTS dbo.Roles;
 GO
 
 -- =============================================================================================
