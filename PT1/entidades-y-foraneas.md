@@ -1,10 +1,10 @@
 # EVENTCORE — Entidades, campos y mapa de relaciones
 
 > Hoja de trabajo para entender el modelo y maquetar el diagrama ER. **Coincide 1:1 con
-> `eventcore_ddl.sql`**: mismos nombres de tabla y columna (PascalCase, plural), mismos tipos,
+> los scripts de `sql/`**: mismos nombres de tabla y columna (PascalCase, plural), mismos tipos,
 > mismas FKs. Motor: **SQL Server 2016+**, schema `dbo`.
 >
-> **19 tablas = 14 de negocio + 5 lookup · 24 llaves foráneas · 1 relación N:M.**
+> **21 tablas = 14 de negocio + 7 lookup/catálogo · 26 llaves foráneas · 1 relación N:M.**
 
 ---
 
@@ -41,7 +41,7 @@ Estas marcas se usan en TODO el documento, sobre todo en las tablas de campos (�
 
 ---
 
-## 0. Las 19 entidades, agrupadas
+## 0. Las 21 entidades, agrupadas
 
 Las **lookup** son la forma normalizada de los enums de *estado/rol* (en vez de `CHECK IN(...)`):
 son extensibles y traen `EsTerminal` para marcar estados cerrados. Los enums **fijos** (modalidad,
@@ -51,6 +51,7 @@ columna porque no cambian con el tiempo.
 | Grupo | Tablas | ¿Tiene FK que sale? |
 |-------|--------|:--:|
 | **Lookup** (catálogos de estado/rol) | `Roles`, `EstadosEvento`, `EstadosInscripcion`, `EstadosPago`, `EstadosSolicitud` | No (son “hojas” de entrada) |
+| **Catálogos de agenda** (predefinidos) | `Dias`, `Horarios` | No (son “hojas” de entrada) |
 | **Catálogos base** | `Usuarios`, `Ponentes`, `Salas`, `TiposEntrada` | Solo `Usuarios` → `Roles` |
 | **Núcleo del evento** | `Eventos`, `Sesiones`, `MaterialesRecurso` | Sí |
 | **Inscripciones** | `Inscripciones`, `InscripcionSesion`, `CodigosInvitacion` | Sí |
@@ -83,6 +84,8 @@ erDiagram
     Eventos ||--o{ Sesiones : "contiene"
     Ponentes ||--o{ Sesiones : "imparte"
     Salas |o--o{ Sesiones : "alberga (opcional)"
+    Dias ||--o{ Sesiones : "día"
+    Horarios ||--o{ Sesiones : "horario"
     Sesiones ||--o{ MaterialesRecurso : "tiene (cascade)"
 
     %% ---------- INSCRIPCIONES ----------
@@ -194,15 +197,26 @@ erDiagram
         nvarchar ModalidadInscripcion
         bit EsPago
     }
+    Dias {
+        tinyint DiaID PK
+        nvarchar Nombre UK
+        nvarchar Abreviatura
+    }
+    Horarios {
+        tinyint HorarioID PK
+        time HoraInicio
+        time HoraFin
+        nvarchar Etiqueta UK
+    }
     Sesiones {
         int SesionID PK
         int EventoID FK
         int PonenteID FK
         int SalaID FK "NULL"
+        tinyint DiaID FK
+        tinyint HorarioID FK
         nvarchar Titulo
         nvarchar Enlace "NULL"
-        datetime2 FechaHoraInicio
-        datetime2 FechaHoraFin
         int CupoMaximo
     }
     MaterialesRecurso {
@@ -307,7 +321,7 @@ La FK siempre vive en el hijo (lado “muchos”).
 | 18 | `SolicitudesCancelacion` | `AdminProcesadorID` | `Usuarios` | `UsuarioID` | **Sí** | — | admin que procesa reembolso |
 | 19 | `LogActividad` | `UsuarioID` | `Usuarios` | `UsuarioID` | **Sí** | — | NULL si la acción es del sistema |
 
-### FKs hacia las lookup (5)
+### FKs hacia las lookup / catálogo (7)
 
 | # | Tabla hijo | Columna FK | → Tabla lookup | → PK padre | ¿Opcional? | Default |
 |--:|------------|------------|----------------|-----------|:--:|---------|
@@ -316,8 +330,10 @@ La FK siempre vive en el hijo (lado “muchos”).
 | 22 | `Inscripciones` | `EstadoInscripcionID` | `EstadosInscripcion` | `EstadoInscripcionID` | No | `1` = PENDIENTE |
 | 23 | `Pagos` | `EstadoPagoID` | `EstadosPago` | `EstadoPagoID` | No | `1` = PENDIENTE |
 | 24 | `SolicitudesCancelacion` | `EstadoSolicitudID` | `EstadosSolicitud` | `EstadoSolicitudID` | No | `1` = PENDIENTE |
+| 25 | `Sesiones` | `DiaID` | `Dias` | `DiaID` | No | — |
+| 26 | `Sesiones` | `HorarioID` | `Horarios` | `HorarioID` | No | — |
 
-**Total: 24 llaves foráneas.**
+**Total: 26 llaves foráneas.**
 
 > `Usuarios` es la tabla más “apuntada”: recibe **7 FKs** de negocio (#1, 6, 12, 13, 16, 18, 19).
 > Cada lookup recibe solo 1. En el diagrama, dibuja las lookup como cajitas pequeñas al borde.
@@ -330,7 +346,7 @@ La FK siempre vive en el hijo (lado “muchos”).
 
 - **`Usuarios`** → `Roles`
 - **`Eventos`** → `Usuarios` (admin), `EstadosEvento`
-- **`Sesiones`** → `Eventos`, `Ponentes`, `Salas` *(opcional)*
+- **`Sesiones`** → `Eventos`, `Ponentes`, `Salas` *(opcional)*, `Dias`, `Horarios`
 - **`MaterialesRecurso`** → `Sesiones` *(cascada)*
 - **`Inscripciones`** → `Usuarios` (asistente), `Eventos`, `TiposEntrada`, `EstadosInscripcion`
 - **`InscripcionSesion`** → `Inscripciones`, `Sesiones`  *(puente N:M)*
@@ -348,7 +364,7 @@ La FK siempre vive en el hijo (lado “muchos”).
 | `Eventos` | Sesiones, Inscripciones, CodigosInvitacion | **3** |
 | `Inscripciones` | InscripcionSesion, Pagos, SolicitudesCancelacion | **3** |
 | `Sesiones` | MaterialesRecurso, InscripcionSesion | **2** |
-| `TiposEntrada` · `Ponentes` · `Salas` · `Tarjetas` | (una cada una) | **1** c/u |
+| `TiposEntrada` · `Ponentes` · `Salas` · `Tarjetas` · `Dias` · `Horarios` | (una cada una) | **1** c/u |
 | `Roles` · `EstadosEvento` · `EstadosInscripcion` · `EstadosPago` · `EstadosSolicitud` | (una cada una) | **1** c/u |
 | `MaterialesRecurso`, `InscripcionSesion`, `CodigosInvitacion`, `LogActividad` | nadie | **0** (hojas) |
 
@@ -367,6 +383,8 @@ La FK siempre vive en el hijo (lado “muchos”).
 | `Eventos` contiene `Sesiones` | 1 ──< N | `Sesiones.EventoID` |
 | `Ponentes` imparte `Sesiones` | 1 ──< N | `Sesiones.PonenteID` |
 | `Salas` alberga `Sesiones` | 0..1 ──< N | `Sesiones.SalaID` (opcional) |
+| `Dias` agenda `Sesiones` | 1 ──< N | `Sesiones.DiaID` |
+| `Horarios` agenda `Sesiones` | 1 ──< N | `Sesiones.HorarioID` |
 | `Sesiones` tiene `MaterialesRecurso` | 1 ──< N | `MaterialesRecurso.SesionID` |
 | `Usuarios`(asistente) realiza `Inscripciones` | 1 ──< N | `Inscripciones.AsistenteID` |
 | `Eventos` recibe `Inscripciones` | 1 ──< N | `Inscripciones.EventoID` |
@@ -424,6 +442,27 @@ La FK siempre vive en el hijo (lado “muchos”).
 > - **EstadosInscripcion:** 1 PENDIENTE · 2 APROBADA · 3 RECHAZADA* · 4 CONFIRMADA · 5 CANCELADA*
 > - **EstadosPago:** 1 PENDIENTE · 2 CONFIRMADO* · 3 RECHAZADO*
 > - **EstadosSolicitud:** 1 PENDIENTE · 2 PROCESADA* · 3 RECHAZADA*
+
+**`Dias`**  ·  *catálogo PREDEFINIDO de días de la semana — el frontend elige por `DiaID`*
+
+| Campo | Tipo | Nulo | Clave | Refiere a / Regla | Notas |
+|-------|------|:--:|-------|-------------------|-------|
+| `DiaID` | TINYINT | No | **PK + CK** | `1..7` | 1 = Lunes … 7 = Domingo (ISO-8601) |
+| `Nombre` | NVARCHAR(15) | No | **UQ** | — | Lunes, Martes… |
+| `Abreviatura` | NVARCHAR(3) | No | — | — | LUN, MAR, MIE… |
+
+> Semilla: `1 Lunes` … `7 Domingo`.
+
+**`Horarios`**  ·  *catálogo PREDEFINIDO de bloques de hora — el frontend elige por `HorarioID`*
+
+| Campo | Tipo | Nulo | Clave | Refiere a / Regla | Notas |
+|-------|------|:--:|-------|-------------------|-------|
+| `HorarioID` | TINYINT | No | **PK** | — | se siembra 1, 2… |
+| `HoraInicio` | TIME(0) | No | **UQ** (bloque) | — | inicio del bloque |
+| `HoraFin` | TIME(0) | No | **UQ** (bloque) + **CK** | `HoraFin > HoraInicio` | fin del bloque |
+| `Etiqueta` | NVARCHAR(20) | No | **UQ** | — | texto para UI: `08:00-09:30` |
+
+> Semilla (ajustable): `1 08:00-09:30` … `6 16:30-18:00`.
 
 ### 4.2 Catálogos base
 
@@ -509,10 +548,10 @@ La FK siempre vive en el hijo (lado “muchos”).
 | `EventoID` | INT | No | **FK** | → `Eventos` | |
 | `PonenteID` | INT | No | **FK** | → `Ponentes` | |
 | `SalaID` | INT | **Sí** | **FK** | → `Salas` | NULL si la sesión es virtual |
+| `DiaID` | TINYINT | No | **FK** | → `Dias` | el frontend elige el día por id |
+| `HorarioID` | TINYINT | No | **FK** | → `Horarios` | el frontend elige el bloque por id |
 | `Titulo` | NVARCHAR(200) | No | — | — | |
 | `Enlace` | NVARCHAR(300) | **Sí** | — | — | “sala o enlace asignado” |
-| `FechaHoraInicio` | DATETIME2(0) | No | — | — | |
-| `FechaHoraFin` | DATETIME2(0) | No | **CK** | `Fin >= Inicio` | |
 | `CupoMaximo` | INT | No | **CK** | `> 0` | |
 
 **`MaterialesRecurso`**  ·  *entidad débil: existe solo mientras exista su sesión*
@@ -617,10 +656,10 @@ La FK siempre vive en el hijo (lado “muchos”).
 
 Una tabla no puede tener FK a otra que aún no existe. Este es el orden seguro (= orden del `.sql`):
 
-1. **Lookup:** `Roles`, `EstadosEvento`, `EstadosInscripcion`, `EstadosPago`, `EstadosSolicitud`
+1. **Lookup / catálogo:** `Roles`, `EstadosEvento`, `EstadosInscripcion`, `EstadosPago`, `EstadosSolicitud`, `Dias`, `Horarios`
 2. **Catálogos base:** `Usuarios` (→ `Roles`), `Ponentes`, `Salas`, `TiposEntrada`
 3. `Eventos` (→ `Usuarios`, `EstadosEvento`)
-4. `Sesiones` (→ `Eventos`, `Ponentes`, `Salas`)
+4. `Sesiones` (→ `Eventos`, `Ponentes`, `Salas`, `Dias`, `Horarios`)
 5. `MaterialesRecurso` (→ `Sesiones`)
 6. `Inscripciones` (→ `Usuarios`, `Eventos`, `TiposEntrada`, `EstadosInscripcion`)
 7. `Tarjetas` (→ `Usuarios`), `CodigosInvitacion` (→ `Eventos`, `Usuarios`)

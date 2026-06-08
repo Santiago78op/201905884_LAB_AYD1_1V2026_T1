@@ -9,6 +9,8 @@ erDiagram
     Eventos ||--o{ Sesiones : "contiene"
     Ponentes ||--o{ Sesiones : "imparte"
     Salas |o--o{ Sesiones : "alberga (opcional)"
+    Dias ||--o{ Sesiones : "día"
+    Horarios ||--o{ Sesiones : "horario"
     Sesiones ||--o{ MaterialesRecurso : "tiene (cascade)"
 
     Usuarios ||--o{ Inscripciones : "realiza (asistente)"
@@ -115,15 +117,26 @@ erDiagram
         nvarchar ModalidadInscripcion
         bit EsPago
     }
+    Dias {
+        tinyint DiaID PK
+        nvarchar Nombre UK
+        nvarchar Abreviatura
+    }
+    Horarios {
+        tinyint HorarioID PK
+        time HoraInicio
+        time HoraFin
+        nvarchar Etiqueta UK
+    }
     Sesiones {
         int SesionID PK
         int EventoID FK
         int PonenteID FK
         int SalaID FK "NULL"
+        tinyint DiaID FK
+        tinyint HorarioID FK
         nvarchar Titulo
         nvarchar Enlace "NULL"
-        datetime2 FechaHoraInicio
-        datetime2 FechaHoraFin
         int CupoMaximo
     }
     MaterialesRecurso {

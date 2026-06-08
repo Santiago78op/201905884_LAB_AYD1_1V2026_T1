@@ -1,7 +1,7 @@
 # EVENTCORE — Tablas y campos
 
-> Diccionario de datos de las **19 tablas** (14 de negocio + 5 lookup). Coincide 1:1 con
-> `eventcore_ddl.sql`. Motor: **SQL Server 2016+**, schema `dbo`.
+> Diccionario de datos de las **21 tablas** (14 de negocio + 7 lookup/catálogo). Coincide 1:1 con
+> los scripts de `sql/`. Motor: **SQL Server 2016+**, schema `dbo`.
 > Las **relaciones** (FKs, cardinalidades, diagrama ER) están en `eventcore-relaciones.md`.
 
 ---
@@ -61,6 +61,27 @@
 > - **EstadosInscripcion:** 1 PENDIENTE · 2 APROBADA · 3 RECHAZADA* · 4 CONFIRMADA · 5 CANCELADA*
 > - **EstadosPago:** 1 PENDIENTE · 2 CONFIRMADO* · 3 RECHAZADO*
 > - **EstadosSolicitud:** 1 PENDIENTE · 2 PROCESADA* · 3 RECHAZADA*
+
+**`Dias`**  ·  *catálogo PREDEFINIDO de días de la semana — el frontend elige por `DiaID`, no crea días*
+
+| Campo | Tipo | Nulo | Clave | Regla | Notas |
+|-------|------|:--:|-------|-------|-------|
+| `DiaID` | TINYINT | No | **PK + CK** | `1..7` | 1 = Lunes … 7 = Domingo (ISO-8601) |
+| `Nombre` | NVARCHAR(15) | No | **UQ** | — | Lunes, Martes… |
+| `Abreviatura` | NVARCHAR(3) | No | — | — | LUN, MAR, MIE… |
+
+> Semilla: `1 Lunes`, `2 Martes`, `3 Miércoles`, `4 Jueves`, `5 Viernes`, `6 Sábado`, `7 Domingo`.
+
+**`Horarios`**  ·  *catálogo PREDEFINIDO de bloques de hora — el frontend elige por `HorarioID`*
+
+| Campo | Tipo | Nulo | Clave | Regla | Notas |
+|-------|------|:--:|-------|-------|-------|
+| `HorarioID` | TINYINT | No | **PK** | — | se siembra 1, 2… |
+| `HoraInicio` | TIME(0) | No | **UQ** (bloque) | — | inicio del bloque |
+| `HoraFin` | TIME(0) | No | **UQ** (bloque) + **CK** | `HoraFin > HoraInicio` | fin del bloque |
+| `Etiqueta` | NVARCHAR(20) | No | **UQ** | — | texto para UI: `08:00-09:30` |
+
+> Semilla (ajustable): `1 08:00-09:30`, `2 09:30-11:00`, `3 11:00-12:30`, `4 13:30-15:00`, `5 15:00-16:30`, `6 16:30-18:00`.
 
 ---
 
@@ -150,10 +171,10 @@
 | `EventoID` | INT | No | **FK** | → `Eventos` | |
 | `PonenteID` | INT | No | **FK** | → `Ponentes` | |
 | `SalaID` | INT | **Sí** | **FK** | → `Salas` | NULL si la sesión es virtual |
+| `DiaID` | TINYINT | No | **FK** | → `Dias` | el frontend elige el día por id |
+| `HorarioID` | TINYINT | No | **FK** | → `Horarios` | el frontend elige el bloque por id |
 | `Titulo` | NVARCHAR(200) | No | — | — | |
 | `Enlace` | NVARCHAR(300) | **Sí** | — | — | “sala o enlace asignado” |
-| `FechaHoraInicio` | DATETIME2(0) | No | — | — | |
-| `FechaHoraFin` | DATETIME2(0) | No | **CK** | `Fin >= Inicio` | |
 | `CupoMaximo` | INT | No | **CK** | `> 0` | |
 
 **`MaterialesRecurso`**  ·  *entidad débil: existe solo mientras exista su sesión*

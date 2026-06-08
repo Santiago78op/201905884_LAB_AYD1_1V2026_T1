@@ -1,7 +1,7 @@
 # EVENTCORE — Relaciones (foráneas, cardinalidades y diagrama ER)
 
-> Cómo se conectan las **19 tablas**: **24 llaves foráneas** y **1 relación N:M**.
-> Coincide 1:1 con `eventcore_ddl.sql`. El detalle de campos/tipos está en `eventcore-tablas.md`.
+> Cómo se conectan las **21 tablas**: **26 llaves foráneas** y **1 relación N:M**.
+> Coincide 1:1 con los scripts de `sql/`. El detalle de campos/tipos está en `eventcore-tablas.md`.
 
 ---
 
@@ -45,7 +45,7 @@ Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**�
 | 18 | `SolicitudesCancelacion` | `AdminProcesadorID` | `Usuarios` | `UsuarioID` | **Sí** | — | admin que procesa reembolso |
 | 19 | `LogActividad` | `UsuarioID` | `Usuarios` | `UsuarioID` | **Sí** | — | NULL si la acción es del sistema |
 
-### FKs hacia las lookup (5)
+### FKs hacia las lookup / catálogo (7)
 
 | # | Tabla hijo | Columna FK | → Tabla lookup | → PK padre | ¿Opcional? | Default |
 |--:|------------|------------|----------------|-----------|:--:|---------|
@@ -54,8 +54,10 @@ Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**�
 | 22 | `Inscripciones` | `EstadoInscripcionID` | `EstadosInscripcion` | `EstadoInscripcionID` | No | `1` = PENDIENTE |
 | 23 | `Pagos` | `EstadoPagoID` | `EstadosPago` | `EstadoPagoID` | No | `1` = PENDIENTE |
 | 24 | `SolicitudesCancelacion` | `EstadoSolicitudID` | `EstadosSolicitud` | `EstadoSolicitudID` | No | `1` = PENDIENTE |
+| 25 | `Sesiones` | `DiaID` | `Dias` | `DiaID` | No | — |
+| 26 | `Sesiones` | `HorarioID` | `Horarios` | `HorarioID` | No | — |
 
-**Total: 24 llaves foráneas.**
+**Total: 26 llaves foráneas.**
 
 > `Usuarios` es la tabla más “apuntada”: recibe **7 FKs** de negocio (#1, 6, 12, 13, 16, 18, 19).
 > Cada lookup recibe solo 1.
@@ -68,7 +70,7 @@ Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**�
 
 - **`Usuarios`** → `Roles`
 - **`Eventos`** → `Usuarios` (admin), `EstadosEvento`
-- **`Sesiones`** → `Eventos`, `Ponentes`, `Salas` *(opcional)*
+- **`Sesiones`** → `Eventos`, `Ponentes`, `Salas` *(opcional)*, `Dias`, `Horarios`
 - **`MaterialesRecurso`** → `Sesiones` *(cascada)*
 - **`Inscripciones`** → `Usuarios` (asistente), `Eventos`, `TiposEntrada`, `EstadosInscripcion`
 - **`InscripcionSesion`** → `Inscripciones`, `Sesiones`  *(puente N:M)*
@@ -86,7 +88,7 @@ Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**�
 | `Eventos` | Sesiones, Inscripciones, CodigosInvitacion | **3** |
 | `Inscripciones` | InscripcionSesion, Pagos, SolicitudesCancelacion | **3** |
 | `Sesiones` | MaterialesRecurso, InscripcionSesion | **2** |
-| `TiposEntrada` · `Ponentes` · `Salas` · `Tarjetas` | (una cada una) | **1** c/u |
+| `TiposEntrada` · `Ponentes` · `Salas` · `Tarjetas` · `Dias` · `Horarios` | (una cada una) | **1** c/u |
 | `Roles` · `EstadosEvento` · `EstadosInscripcion` · `EstadosPago` · `EstadosSolicitud` | (una cada una) | **1** c/u |
 | `MaterialesRecurso`, `InscripcionSesion`, `CodigosInvitacion`, `LogActividad` | nadie | **0** (hojas) |
 
@@ -102,6 +104,8 @@ Cada fila es **una FK**: *“la columna del **hijo** apunta al PK del **padre**�
 | `Eventos` contiene `Sesiones` | 1 ──< N | `Sesiones.EventoID` |
 | `Ponentes` imparte `Sesiones` | 1 ──< N | `Sesiones.PonenteID` |
 | `Salas` alberga `Sesiones` | 0..1 ──< N | `Sesiones.SalaID` (opcional) |
+| `Dias` agenda `Sesiones` | 1 ──< N | `Sesiones.DiaID` |
+| `Horarios` agenda `Sesiones` | 1 ──< N | `Sesiones.HorarioID` |
 | `Sesiones` tiene `MaterialesRecurso` | 1 ──< N | `MaterialesRecurso.SesionID` |
 | `Usuarios`(asistente) realiza `Inscripciones` | 1 ──< N | `Inscripciones.AsistenteID` |
 | `Eventos` recibe `Inscripciones` | 1 ──< N | `Inscripciones.EventoID` |
@@ -144,6 +148,8 @@ erDiagram
     Eventos ||--o{ Sesiones : "contiene"
     Ponentes ||--o{ Sesiones : "imparte"
     Salas |o--o{ Sesiones : "alberga (opcional)"
+    Dias ||--o{ Sesiones : "día"
+    Horarios ||--o{ Sesiones : "horario"
     Sesiones ||--o{ MaterialesRecurso : "tiene (cascade)"
 
     Usuarios ||--o{ Inscripciones : "realiza (asistente)"
@@ -175,10 +181,10 @@ erDiagram
 
 Una tabla no puede tener FK a otra que aún no existe. Orden seguro (= orden del `.sql`):
 
-1. **Lookup:** `Roles`, `EstadosEvento`, `EstadosInscripcion`, `EstadosPago`, `EstadosSolicitud`
+1. **Lookup / catálogo:** `Roles`, `EstadosEvento`, `EstadosInscripcion`, `EstadosPago`, `EstadosSolicitud`, `Dias`, `Horarios`
 2. **Catálogos base:** `Usuarios` (→ `Roles`), `Ponentes`, `Salas`, `TiposEntrada`
 3. `Eventos` (→ `Usuarios`, `EstadosEvento`)
-4. `Sesiones` (→ `Eventos`, `Ponentes`, `Salas`)
+4. `Sesiones` (→ `Eventos`, `Ponentes`, `Salas`, `Dias`, `Horarios`)
 5. `MaterialesRecurso` (→ `Sesiones`)
 6. `Inscripciones` (→ `Usuarios`, `Eventos`, `TiposEntrada`, `EstadosInscripcion`)
 7. `Tarjetas` (→ `Usuarios`), `CodigosInvitacion` (→ `Eventos`, `Usuarios`)
