@@ -294,3 +294,92 @@ Para no perder historial ni romper FKs: un ponente con sesiones no se elimina, s
 
 > Diagrama ER y detalle completo: `../eventcore-er.svg/.png`, `../eventcore-tablas.md`,
 > `../eventcore-relaciones.md`, `../entidades-y-foraneas.md`.
+
+---
+
+## 10. 🔐 Cómo usa el backend estos ids (signup / login)
+
+Aquí se ve el “pago” de tener ids fijos: el backend los usa como **constantes** para registrar,
+confirmar correo, autenticar y autorizar. Ejemplos en Flask + SQL Server (`pyodbc`).
+
+**Los ids sembrados se vuelven constantes en el código** (nunca un número suelto):
+```python
+ROL_ADMIN     = 1
+ROL_ASISTENTE = 2
+```
+
+### Signup → `INSERT` en `Usuarios`
+El rol se fija con la constante; `CorreoConfirmado`/`Activo` los pone la BD por `DEFAULT`.
+```python
+hash_pw = generate_password_hash(d["contrasena"])      # nunca texto plano
+cur.execute("""
+    INSERT INTO dbo.Usuarios
+        (NombreCompleto, Correo, Contrasena, Telefono, Organizacion,
+         PaisResidencia, FotoPerfil, RolID)
+    OUTPUT INSERTED.UsuarioID
+    VALUES (?,?,?,?,?,?,?,?)
+""", d["nombre"], d["correo"], hash_pw, d["telefono"],
+     d["organizacion"], d["pais"], d["foto"], ROL_ASISTENTE)   # ← id fijo
+usuario_id = cur.fetchone()[0]
+
+# token de verificación (tabla ConfirmacionesCorreo)
+token = secrets.token_urlsafe(32)
+cur.execute("""
+    INSERT INTO dbo.ConfirmacionesCorreo (UsuarioID, Token, FechaExpira)
+    VALUES (?, ?, DATEADD(HOUR, 24, SYSUTCDATETIME()))
+""", usuario_id, token)
+enviar_correo(d["correo"], f"https://tuapp/confirmar/{token}")
+```
+
+### Confirmar correo → `GET /confirmar/:token`
+Prende el flag `CorreoConfirmado` y marca el token como usado.
+```python
+fila = cur.execute("""
+    SELECT ConfirmacionID, UsuarioID FROM dbo.ConfirmacionesCorreo
+    WHERE Token = ? AND Usado = 0 AND FechaExpira > SYSUTCDATETIME()
+""", token).fetchone()
+if not fila:
+    return "Token inválido o vencido", 400
+cur.execute("UPDATE dbo.Usuarios SET CorreoConfirmado = 1 WHERE UsuarioID = ?", fila.UsuarioID)
+cur.execute("UPDATE dbo.ConfirmacionesCorreo SET Usado = 1, FechaUso = SYSUTCDATETIME() WHERE ConfirmacionID = ?", fila.ConfirmacionID)
+```
+
+### Login → `SELECT` + verificaciones
+Los flags y el rol deciden todo.
+```python
+u = cur.execute("""
+    SELECT UsuarioID, Contrasena, RolID, CorreoConfirmado, Activo
+    FROM dbo.Usuarios WHERE Correo = ?
+""", d["correo"]).fetchone()
+
+if not u or not check_password_hash(u.Contrasena, d["contrasena"]):
+    return "Credenciales inválidas", 401
+if u.CorreoConfirmado != 1:        # regla del enunciado: confirmar correo antes de entrar
+    return "Confirmá tu correo primero", 403
+if u.Activo != 1:                  # borrado lógico
+    return "Cuenta desactivada", 403
+
+token = crear_jwt({"uid": u.UsuarioID, "rol": u.RolID})   # el rol viaja en el token
+return {"token": token}
+```
+
+### Autorización → comparar el rol contra la constante
+```python
+@app.route("/eventos", methods=["POST"])
+def crear_evento():
+    if request.usuario["rol"] != ROL_ADMIN:    # ← 1 = ADMIN, siempre
+        return "Solo administradores", 403
+    ...
+```
+
+### Resumen: qué campo decide qué
+| Campo de la BD | Quién lo escribe | Qué decide en el backend |
+|---|---|---|
+| `RolID` (1/2) | el signup, con la constante | admin o asistente → permisos |
+| `CorreoConfirmado` (0→1) | `/confirmar/:token` | si puede iniciar sesión |
+| `Activo` (1/0) | admin / borrado lógico | si la cuenta sigue válida |
+| `ConfirmacionesCorreo.Token` | el signup (único) | encontrar al usuario al confirmar |
+
+> **División de responsabilidades:** la BD *guarda* el hash, los flags y los ids, y *garantiza*
+> reglas (UNIQUE de correo, FK del rol). **Hashear la contraseña, emitir el JWT y la capa de
+> seguridad extra del admin** son lógica del **backend**, no de la base.

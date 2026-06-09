@@ -1,0 +1,117 @@
+@startuml EventCore_CasosDeUso
+' =====================================================================
+'  EventCore (BD "Cumbre") - Diagrama de Casos de Uso UML  ·  AYD1 2026
+'  Incluye las 5 relaciones UML: asociación, include, extend,
+'  generalización de actores y generalización de casos de uso.
+'  Render sin admin:  https://www.plantuml.com/plantuml  (pegar este texto)
+'             o extensión "PlantUML" en VS Code (Alt+D para previsualizar)
+' =====================================================================
+left to right direction
+
+' ---------- Estilo profesional ----------
+skinparam backgroundColor #FFFFFF
+skinparam shadowing true
+skinparam roundcorner 12
+skinparam ArrowColor #5D6D7E
+skinparam defaultFontName Segoe UI
+skinparam titleFontSize 20
+skinparam titleFontColor #2C3E50
+skinparam actor {
+  BackgroundColor #ECF0F1
+  BorderColor #2C3E50
+  FontColor #2C3E50
+  FontStyle bold
+}
+skinparam usecase {
+  BorderThickness 1.5
+  FontColor #2C3E50
+}
+skinparam rectangle {
+  BorderColor #2C3E50
+  FontColor #2C3E50
+  FontStyle bold
+}
+
+title EventCore — Diagrama de Casos de Uso (UML)
+
+' ===== Actores =====
+actor "Usuario" as USER
+actor "Asistente"           as ASIS  #D5E8D4
+actor "Administrador"       as ADMIN #FFE6CC
+actor "Servicio\nde Correo" as MAIL  #E1D5E7
+actor "Pasarela\nde Pago"   as PAY   #E1D5E7
+
+' Generalización de actores: Asistente y Administrador SON Usuarios
+ASIS  --|> USER
+ADMIN --|> USER
+
+rectangle "Sistema EventCore" {
+
+  package "Cuenta y Acceso  (heredado por Usuario)" #E7F0FB {
+    usecase "Registrarse"      as UC_REG   #DAE8FC
+    usecase "Confirmar correo" as UC_CONF  #DAE8FC
+    usecase "Iniciar sesión"   as UC_LOGIN #DAE8FC
+  }
+
+  package "Funciones del Asistente" #EAF5E2 {
+    usecase "Explorar eventos\ny sesiones"        as UC_EXPL #D5E8D4
+    usecase "Inscribirse a un evento"             as UC_INSC #D5E8D4
+    usecase "Seleccionar sesiones"                as UC_SESE #D5E8D4
+    usecase "Canjear código\nde invitación"       as UC_CANJ #D5E8D4
+    usecase "Registrar tarjeta"                   as UC_TARJ #D5E8D4
+    usecase "Realizar pago"                        as UC_PAGO #B9DDB3
+    usecase "Pago con tarjeta"                     as UC_PAGO_T  #D5E8D4
+    usecase "Pago por transferencia"              as UC_PAGO_TR #D5E8D4
+    usecase "Solicitar cancelación\n/ reembolso"  as UC_CANC #D5E8D4
+  }
+
+  package "Administración" #FFF1E0 {
+    usecase "Gestionar eventos\n(crear/editar/publicar/cancelar)" as UC_GEV  #FFE6CC
+    usecase "Gestionar sesiones\ny materiales"     as UC_GSE  #FFE6CC
+    usecase "Gestionar catálogos\n(ponentes/salas/entradas)" as UC_GCAT #FFE6CC
+    usecase "Aprobar / rechazar\ninscripciones"    as UC_APR  #FFE6CC
+    usecase "Verificar pagos"                      as UC_VPAG #FFE6CC
+    usecase "Procesar cancelaciones\ny reembolsos" as UC_PCAN #FFE6CC
+    usecase "Enviar códigos\nde invitación"        as UC_ENVI #FFE6CC
+    usecase "Ver bitácora\nde actividad"           as UC_LOG  #FFE6CC
+  }
+}
+
+' ===== Asociaciones del Usuario base (heredadas por ambos) =====
+USER --> UC_REG
+USER --> UC_LOGIN
+
+' ===== Asociaciones del Asistente =====
+ASIS --> UC_EXPL
+ASIS --> UC_INSC
+ASIS --> UC_CANJ
+ASIS --> UC_TARJ
+ASIS --> UC_PAGO
+ASIS --> UC_CANC
+
+' ===== Asociaciones del Administrador =====
+ADMIN --> UC_GEV
+ADMIN --> UC_GSE
+ADMIN --> UC_GCAT
+ADMIN --> UC_APR
+ADMIN --> UC_VPAG
+ADMIN --> UC_PCAN
+ADMIN --> UC_ENVI
+ADMIN --> UC_LOG
+
+' ===== Actores externos (sistemas) =====
+MAIL --> UC_CONF
+MAIL --> UC_ENVI
+PAY  --> UC_PAGO_T
+
+' ===== include / extend =====
+UC_REG    ..> UC_CONF : <<include>>
+UC_INSC   ..> UC_SESE : <<include>>
+UC_PAGO   ..> UC_INSC : <<extend>>\n(si es de pago)
+UC_PAGO_T ..> UC_TARJ : <<include>>
+
+' ===== Generalización de casos de uso =====
+UC_PAGO_T  --|> UC_PAGO
+UC_PAGO_TR --|> UC_PAGO
+
+@enduml
