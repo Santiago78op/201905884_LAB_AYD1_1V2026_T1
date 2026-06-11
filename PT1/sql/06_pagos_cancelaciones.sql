@@ -15,6 +15,7 @@ CREATE TABLE dbo.Tarjetas (
     NumeroEnmascarado NVARCHAR(25)   NOT NULL,               -- solo últimos dígitos, nunca completo
     Tipo              NVARCHAR(10)   NOT NULL,
     FechaExpiracion   NVARCHAR(7)    NOT NULL,               -- formato MM/AAAA
+    Activo            BIT            NOT NULL CONSTRAINT DF_Tarjetas_Activo DEFAULT (1),
     CONSTRAINT PK_Tarjetas          PRIMARY KEY (TarjetaID),
     CONSTRAINT FK_Tarjetas_Usuarios FOREIGN KEY (AsistenteID) REFERENCES dbo.Usuarios (UsuarioID),
     CONSTRAINT CK_Tarjetas_Tipo     CHECK (Tipo IN (N'DEBITO', N'CREDITO'))

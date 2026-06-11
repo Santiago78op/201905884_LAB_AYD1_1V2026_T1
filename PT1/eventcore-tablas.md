@@ -237,6 +237,7 @@
 | `NumeroEnmascarado` | NVARCHAR(25) | No | — | — | solo últimos dígitos, **nunca** el número completo |
 | `Tipo` | NVARCHAR(10) | No | **CK** | `DEBITO` \| `CREDITO` | enum fijo |
 | `FechaExpiracion` | NVARCHAR(7) | No | — | formato `MM/AAAA` | |
+| `Activo` | BIT | No | — | DEFAULT `1` | borrado lógico: "eliminar" del perfil = `0`, preserva los pagos |
 
 **`Pagos`**
 
