@@ -1,0 +1,281 @@
+classDiagram
+    direction LR
+
+    class RolUsuario {
+        <<enumeration>>
+        CLIENTE
+        OPERADOR
+        EMPRESA
+        ADMIN
+    }
+    class EstadoCuenta {
+        <<enumeration>>
+        ACTIVA
+        SUSPENDIDA
+        VETADA
+    }
+    class EstadoReserva {
+        <<enumeration>>
+        ACTIVO
+        EN_TRANSITO
+        ENTREGADO
+        CANCELADO
+    }
+    class EstadoPago {
+        <<enumeration>>
+        PENDIENTE
+        PROCESADO
+        RECHAZADO
+    }
+    class EstadoReporte {
+        <<enumeration>>
+        ENVIADO
+        EN_REVISION
+        ACEPTADO
+        RECHAZADO
+    }
+    class MetodoPago {
+        <<enumeration>>
+        TARJETA
+        WALLET
+    }
+    class EstadoSolicitud {
+        <<enumeration>>
+        PENDIENTE
+        ACEPTADA
+        RECHAZADA
+    }
+
+    class Usuario {
+        <<abstract>>
+        +int id
+        +string correo
+        -string contrasenaHash
+        +RolUsuario rol
+        +EstadoCuenta estado
+        +bool correoConfirmado
+        +datetime fechaRegistro
+        +iniciarSesion(pwd) bool
+        +confirmarCorreo(token) bool
+        +editarPerfil(datos) void
+    }
+    class Cliente {
+        +string nombre
+        +string apellido
+        +string telefono
+        +string direccionOrigen
+        +buscarServicios(filtros) List~Servicio~
+        +programarReserva(servicio, fechas) Reservacion
+        +pagar(reserva, tarjeta) Pago
+        +calificar(reserva, punt, coment) Calificacion
+        +canjearCupon(codigo) CuponCanjeado
+        +reportar(reportado, desc) Reporte
+    }
+    class OperadorLogistico {
+        +string nombre
+        +string apellido
+        +string dpiCui
+        +string fotografia
+        +EstadoSolicitud estadoRegistro
+        +crearServicio(datos) ServicioEnvio
+        +suspenderServicio(servicio) void
+        +responderComentario(calif, texto) void
+        +generarCupon(datos) Cupon
+        +reportarCliente(cliente, ev) Reporte
+    }
+    class EmpresaTransporte {
+        +string nombreEmpresa
+        +string nit
+        +string numeroLicencia
+        +EstadoSolicitud estadoRegistro
+        +cargarRutasCSV(archivo) List~Ruta~
+        +editarRuta(ruta, datos) void
+        +cancelarRuta(ruta, motivo) void
+        +generarCupon(datos) Cupon
+    }
+    class Administrador {
+        +aprobarOperador(op, decision) void
+        +agendarReunion(empresa, fecha, enlace) ReunionVirtual
+        +vetarUsuario(usuario, motivo) void
+        +resolverReporte(reporte, decision) void
+        +aprobarCambioPerfil(solicitud, decision) void
+        +registrarAdministrador(datos) Administrador
+    }
+    Usuario <|-- Cliente
+    Usuario <|-- OperadorLogistico
+    Usuario <|-- EmpresaTransporte
+    Usuario <|-- Administrador
+
+    class ServicioEnvio {
+        +int id
+        +Zona zonaCobertura
+        +decimal capacidadCargaKg
+        +decimal precioEnvio
+        +bool suspendido
+        +bool activo
+    }
+    class FotoServicio {
+        +int id
+        +string url
+    }
+    class Ruta {
+        +int id
+        +Zona origen
+        +Zona destino
+        +string tipoServicio
+        +time horaInicio
+        +int tiempoEstimadoMin
+        +decimal precio
+        +string estado
+    }
+    class Vehiculo {
+        +int id
+        +string identificador
+        +string tipo
+        +decimal capacidad
+    }
+    class Zona {
+        +int id
+        +string nombre
+        +string tipo
+    }
+    OperadorLogistico "1" --> "0..*" ServicioEnvio : ofrece
+    ServicioEnvio "1" *-- "3..*" FotoServicio : contiene
+    EmpresaTransporte "1" --> "0..*" Ruta : ofrece
+    EmpresaTransporte "1" --> "0..*" Vehiculo : registra
+    ServicioEnvio "0..*" --> "1" Zona
+    Ruta "0..*" --> "2" Zona
+
+    class Carrito {
+        +int id
+        +agregar(item) void
+        +eliminar(item) void
+        +total() decimal
+    }
+    class ItemCarrito {
+        +int id
+        +datetime fechaProgramada
+        +decimal monto
+    }
+    class Reservacion {
+        <<abstract>>
+        +int id
+        +datetime fechaInicio
+        +EstadoReserva estado
+        +decimal monto
+        +cancelar() void
+    }
+    class ReservaEnvio {
+        +datetime fechaFin
+    }
+    class ReservaTransporte {
+        +time hora
+    }
+    class Tarjeta {
+        +int id
+        +string titular
+        +string numeroEnmascarado
+        +string fechaVencimiento
+        +decimal saldo
+        +MetodoPago metodo
+        +bool activo
+    }
+    class Pago {
+        +int id
+        +decimal monto
+        +EstadoPago estado
+        +datetime fecha
+    }
+    Reservacion <|-- ReservaEnvio
+    Reservacion <|-- ReservaTransporte
+    Cliente "1" --> "1" Carrito : tiene
+    Carrito "1" *-- "0..*" ItemCarrito : contiene
+    Cliente "1" --> "0..*" Reservacion : realiza
+    Cliente "1" --> "0..*" Tarjeta : registra
+    ReservaEnvio "0..*" --> "1" ServicioEnvio
+    ReservaTransporte "0..*" --> "1" Ruta
+    Reservacion "1" *-- "0..*" Pago : genera
+    Pago "0..*" --> "1" Tarjeta : usa
+
+    class Calificacion {
+        +int id
+        +int puntuacion
+        +string comentario
+        +string respuestaProveedor
+        +datetime fecha
+    }
+    class Cupon {
+        +int id
+        +string codigo
+        +string tipoDescuento
+        +decimal valorDescuento
+        +datetime fechaInicio
+        +datetime fechaFin
+        +bool activo
+        +esValido(fecha) bool
+    }
+    class CuponCanjeado {
+        +int id
+        +datetime fechaCanje
+    }
+    class Reporte {
+        +int id
+        +string tipo
+        +string descripcion
+        +EstadoReporte estado
+        +datetime fecha
+    }
+    class EvidenciaReporte {
+        +int id
+        +string url
+        +string tipo
+    }
+    class Sancion {
+        +int id
+        +string tipo
+        +string motivo
+        +datetime fechaInicio
+        +datetime fechaFin
+    }
+    Reservacion "1" --> "0..1" Calificacion : recibe
+    Usuario "1" --> "0..*" Cupon : emite
+    Cupon "1" --> "0..*" CuponCanjeado
+    Cliente "1" --> "0..*" CuponCanjeado : canjea
+    Usuario "1" --> "0..*" Reporte : reporta
+    Usuario "1" --> "0..*" Reporte : es reportado
+    Reporte "1" *-- "0..*" EvidenciaReporte : adjunta
+    Reporte "1" --> "0..1" Sancion : deriva en
+    Administrador "1" --> "0..*" Sancion : aplica
+
+    class Token {
+        +int id
+        +string tipo
+        +string valor
+        +datetime fechaExpira
+        +bool usado
+        +estaVigente() bool
+    }
+    class SolicitudCambioPerfil {
+        +int id
+        +string datosPropuestos
+        +EstadoSolicitud estado
+        +datetime fecha
+    }
+    class ReunionVirtual {
+        +int id
+        +datetime fechaHora
+        +string enlace
+        +string estado
+    }
+    class Notificacion {
+        +int id
+        +string tipo
+        +string mensaje
+        +bool leida
+        +datetime fecha
+    }
+    Usuario "1" --> "0..*" Token : genera
+    Usuario "1" --> "0..*" Notificacion : recibe
+    Usuario "1" --> "0..*" SolicitudCambioPerfil : solicita
+    Administrador "1" --> "0..*" SolicitudCambioPerfil : resuelve
+    EmpresaTransporte "1" --> "0..*" ReunionVirtual : participa

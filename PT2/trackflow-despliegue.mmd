@@ -1,0 +1,32 @@
+flowchart TB
+    subgraph CLIENTE["💻 Dispositivo del usuario"]
+        BROWSER["Navegador web"]
+    end
+
+    subgraph GH["☁️ GitHub"]
+        REPO["Repositorio<br/>AYD1_Proyecto_VD_G#"]
+        GHA["GitHub Actions<br/>Build · Test · Deploy"]
+    end
+
+    subgraph CLOUD["☁️ Servidor en la nube / VM — Docker host"]
+        PROXY["Reverse proxy<br/>(Nginx · HTTPS)"]
+        subgraph DOCKER["Docker Engine — docker compose"]
+            CFE["Contenedor: Frontend<br/>SPA servida por Nginx"]
+            CBE["Contenedor: Backend<br/>API REST"]
+            CDB[("Contenedor: Base de datos<br/>SQL Server / azure-sql-edge")]
+        end
+        VOL[("Volumen persistente<br/>datos de la BD + archivos")]
+    end
+
+    MAIL[["✉️ Servicio de correo (SMTP)"]]
+
+    BROWSER -->|"HTTPS 443"| PROXY
+    PROXY -->|"estáticos"| CFE
+    PROXY -->|"/api"| CBE
+    CFE -->|"REST / JSON 8080"| CBE
+    CBE -->|"TDS 1433"| CDB
+    CDB --- VOL
+    CBE -->|"SMTP 587"| MAIL
+
+    REPO --> GHA
+    GHA -->|"push a main → deploy"| DOCKER

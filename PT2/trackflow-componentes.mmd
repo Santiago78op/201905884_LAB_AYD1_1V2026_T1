@@ -1,0 +1,61 @@
+flowchart TB
+    USR([👤 Usuario en navegador])
+
+    subgraph FE["Frontend — SPA (Tailwind CSS)"]
+        VISTAS["Vistas por rol<br/>cliente · operador · empresa · admin"]
+        HTTPC["Cliente HTTP<br/>+ manejo de sesión / JWT"]
+    end
+
+    subgraph BE["Backend — API REST (contenedor)"]
+        AUTH["Auth<br/>registro · login · 2FA · tokens"]
+        USUA["Usuarios<br/>perfiles · aprobación · vetos"]
+        SERV["Servicios y rutas<br/>envíos · rutas · flota"]
+        RESV["Reservas<br/>+ regla 24 h / no-traslape"]
+        PAGO["Pagos<br/>+ Luhn · saldo · reparto"]
+        CUP["Cupones"]
+        REP["Reportes y sanciones"]
+        PDF["Generador de PDF<br/>logs · gráficas"]
+        NOTI["Notificaciones"]
+        LOG["Bitácora"]
+    end
+
+    subgraph DATA["Persistencia"]
+        DB[("SQL Server<br/>base TrackFlow")]
+        FILES["Almacenamiento de archivos<br/>fotos · evidencias · PDFs"]
+    end
+
+    MAIL[["✉️ Servicio de correo (SMTP)"]]
+
+    USR -->|HTTPS| VISTAS
+    VISTAS --> HTTPC
+    HTTPC -->|"REST / JSON + JWT"| AUTH
+    HTTPC -->|"REST / JSON"| USUA
+    HTTPC -->|"REST / JSON"| SERV
+    HTTPC -->|"REST / JSON"| RESV
+    HTTPC -->|"REST / JSON"| CUP
+    HTTPC -->|"REST / JSON"| REP
+    HTTPC -->|"REST / JSON"| PDF
+
+    AUTH --> DB
+    USUA --> DB
+    SERV --> DB
+    SERV --> FILES
+    RESV --> PAGO
+    PAGO --> DB
+    CUP --> DB
+    REP --> DB
+    REP --> FILES
+    PDF --> DB
+    PDF --> FILES
+
+    AUTH --> NOTI
+    USUA --> NOTI
+    RESV --> NOTI
+    REP --> NOTI
+    NOTI -->|SMTP| MAIL
+
+    AUTH -.->|log| LOG
+    USUA -.->|log| LOG
+    RESV -.->|log| LOG
+    REP  -.->|log| LOG
+    LOG --> DB

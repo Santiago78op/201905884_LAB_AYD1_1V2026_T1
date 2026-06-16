@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor A as Administrador
+    participant UI as Frontend
+    participant API as Backend (API)
+    participant DB as Base de datos
+    participant MAIL as Servicio de correo
+
+    A->>UI: Ingresa correo y contraseña
+    UI->>API: POST /login { correo, contraseña }
+    API->>DB: SELECT Usuarios WHERE Correo = ?
+    API->>API: AuthService verifica el hash
+
+    alt Cuenta VETADA
+        API-->>UI: 403 — "Cuenta vetada, contactá al administrador"
+    else Credenciales inválidas
+        API-->>UI: 401 — "Credenciales inválidas"
+    else Credenciales correctas
+        alt Rol = ADMIN
+            API->>DB: INSERT Tokens (DOBLE_FACTOR_2FA, FechaExpira = ahora + 2 min)
+            API->>MAIL: Enviar token 2FA
+            API-->>UI: 200 — "Ingresá el código enviado a tu correo"
+            A->>UI: Ingresa el código 2FA
+            UI->>API: POST /login/2fa { valor }
+            API->>DB: SELECT Tokens (2FA) WHERE Valor = ? AND Usado = 0 AND FechaExpira > ahora
+            alt Código válido y vigente
+                API->>DB: UPDATE Tokens SET Usado = 1
+                API-->>UI: 200 + JWT { uid, rol = ADMIN }
+            else Código inválido o vencido (2 min)
+                API-->>UI: 401 — "Código inválido o expirado"
+            end
+        else Rol = CLIENTE / OPERADOR / EMPRESA
+            API->>API: Verifica CorreoConfirmado = 1 (y aprobación, según el rol)
+            API-->>UI: 200 + JWT { uid, rol }
+        end
+    end

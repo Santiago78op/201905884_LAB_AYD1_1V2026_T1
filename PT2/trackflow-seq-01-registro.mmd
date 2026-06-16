@@ -1,0 +1,33 @@
+sequenceDiagram
+    autonumber
+    actor C as Cliente
+    participant UI as Frontend
+    participant API as Backend (API)
+    participant DB as Base de datos
+    participant MAIL as Servicio de correo
+
+    C->>UI: Llena registro (nombre, correo, contraseña x2)
+    UI->>API: POST /registro (rol = CLIENTE)
+    API->>API: Valida contraseña segura y que ambas coincidan
+
+    alt Datos válidos y correo no repetido
+        API->>DB: INSERT Usuarios (hash, CorreoConfirmado = 0, Estado = ACTIVA)
+        API->>DB: INSERT PerfilCliente (UsuarioID)
+        API->>DB: INSERT Tokens (CONFIRMACION_CORREO, valor 6 chars, FechaExpira)
+        API->>MAIL: Enviar token al correo
+        API-->>UI: 201 Creado — "Confirmá tu correo"
+    else Correo ya registrado / contraseña débil
+        API-->>UI: 409 / 400 con el detalle
+    end
+
+    C->>UI: Ingresa el token de 6 caracteres
+    UI->>API: POST /confirmar { token }
+    API->>DB: SELECT Tokens WHERE Valor = ? AND Usado = 0 AND FechaExpira > ahora
+
+    alt Token válido y vigente
+        API->>DB: UPDATE Usuarios SET CorreoConfirmado = 1
+        API->>DB: UPDATE Tokens SET Usado = 1, FechaUso = ahora
+        API-->>UI: 200 — "Correo confirmado, ya podés iniciar sesión"
+    else Token inválido o vencido
+        API-->>UI: 400 — "Token inválido o vencido"
+    end

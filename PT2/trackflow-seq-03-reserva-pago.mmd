@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor C as Cliente
+    participant UI as Frontend
+    participant API as Backend (API)
+    participant DB as Base de datos
+    participant MAIL as Servicio de correo
+
+    C->>UI: Elige un servicio de envío y un rango de fechas
+    UI->>API: POST /carrito (Tipo = ENVIO, ServicioEnvioID, fechas)
+    API->>DB: INSERT ItemsCarrito
+    API-->>UI: 200 — Ítem agregado al carrito
+
+    C->>UI: Confirma la compra (checkout)
+    UI->>API: POST /reservas (desde el carrito) + TarjetaID
+    API->>API: ReservaService valida ≥ 24 h y sin traslape
+
+    alt No cumple 24 h o hay traslape
+        API-->>UI: 409 — "No disponible en ese rango"
+    else Reglas de fecha OK
+        API->>DB: INSERT Reservaciones (Estado = ACTIVO, Monto)
+        API->>DB: INSERT Pagos (Estado = PENDIENTE)
+        API->>API: PagoService valida Luhn y consulta saldo de la Tarjeta
+
+        alt Luhn OK y saldo suficiente
+            API->>DB: UPDATE Tarjetas SET Saldo = Saldo - Monto
+            API->>DB: UPDATE Pagos SET Estado = PROCESADO
+            API->>DB: DELETE ItemsCarrito (ítem comprado)
+            API->>MAIL: Enviar confirmación de la reserva
+            API-->>UI: 201 — Reserva confirmada
+        else Luhn inválido o saldo insuficiente
+            API->>DB: UPDATE Pagos SET Estado = RECHAZADO
+            API->>DB: UPDATE Reservaciones SET Estado = CANCELADO
+            API-->>UI: 402 — "Pago rechazado"
+        end
+    end

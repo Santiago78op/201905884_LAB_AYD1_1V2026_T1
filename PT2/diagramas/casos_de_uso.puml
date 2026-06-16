@@ -1,0 +1,162 @@
+@startuml TrackFlowHub_CasosDeUso
+' =====================================================================
+'  TrackFlow-HUB (BD "TrackFlow") - Diagrama de Casos de Uso UML  ·  AYD1 2026
+'  Incluye las relaciones UML: asociación, include, extend,
+'  generalización de actores y generalización de casos de uso.
+'  Render sin instalar:  https://www.plantuml.com/plantuml  (pegar este texto)
+'             o extensión "PlantUML" en VS Code (Alt+D para previsualizar)
+' =====================================================================
+left to right direction
+
+' ---------- Estilo profesional ----------
+skinparam backgroundColor #FFFFFF
+skinparam shadowing true
+skinparam roundcorner 12
+skinparam ArrowColor #5D6D7E
+skinparam defaultFontName Segoe UI
+skinparam titleFontSize 20
+skinparam titleFontColor #2C3E50
+skinparam actor {
+  BackgroundColor #ECF0F1
+  BorderColor #2C3E50
+  FontColor #2C3E50
+  FontStyle bold
+}
+skinparam usecase {
+  BorderThickness 1.5
+  FontColor #2C3E50
+}
+skinparam rectangle {
+  BorderColor #2C3E50
+  FontColor #2C3E50
+  FontStyle bold
+}
+
+title TrackFlow-HUB — Diagrama de Casos de Uso (UML)
+
+' ===== Actores =====
+actor "Usuario"             as USER
+actor "Cliente"             as CLI   #D5E8D4
+actor "Operador\nlogístico" as OPE   #DAE8FC
+actor "Empresa de\ntransporte" as EMP #FFF2CC
+actor "Administrador"       as ADM   #FFE6CC
+actor "Servicio\nde Correo" as MAIL  #E1D5E7
+actor "Pago simulado\n(Luhn)" as PAY  #E1D5E7
+
+' Generalización de actores: los 4 roles SON Usuarios
+CLI --|> USER
+OPE --|> USER
+EMP --|> USER
+ADM --|> USER
+
+rectangle "Sistema TrackFlow-HUB" {
+
+  package "Cuenta y Acceso  (heredado por Usuario)" #E7F0FB {
+    usecase "Registrarse"               as UC_REG   #DAE8FC
+    usecase "Confirmar correo\n(token 6 chars)" as UC_CONF  #DAE8FC
+    usecase "Iniciar sesión"            as UC_LOGIN #DAE8FC
+    usecase "Verificación 2FA"          as UC_2FA   #DAE8FC
+    usecase "Editar / solicitar\ncambio de perfil" as UC_PERF #DAE8FC
+  }
+
+  package "Cliente" #EAF5E2 {
+    usecase "Buscar y filtrar\nenvíos"      as UC_BENV #D5E8D4
+    usecase "Buscar y filtrar\ntransporte"  as UC_BTRA #D5E8D4
+    usecase "Programar reserva"             as UC_RES  #D5E8D4
+    usecase "Gestionar carrito"             as UC_CAR  #D5E8D4
+    usecase "Gestionar tarjetas\ny saldo"   as UC_TAR  #D5E8D4
+    usecase "Pagar reserva"                 as UC_PAGO #B9DDB3
+    usecase "Calificar y reseñar"           as UC_CAL  #D5E8D4
+    usecase "Canjear cupón"                 as UC_CUP  #D5E8D4
+    usecase "Reportar problema"             as UC_REP  #D5E8D4
+  }
+
+  package "Operador logístico" #E7F0FB {
+    usecase "Gestionar servicios\nde envío"  as UC_GSE #DAE8FC
+    usecase "Suspender servicio"             as UC_SUS #DAE8FC
+    usecase "Responder comentarios"          as UC_RC  #DAE8FC
+    usecase "Ver calendario\nde envíos"      as UC_CAL2 #DAE8FC
+    usecase "Generar cupones\n(operador)"    as UC_GCU #DAE8FC
+    usecase "Reportar clientes"              as UC_RCL #DAE8FC
+    usecase "Reportes PDF\ndel operador"     as UC_RPO #DAE8FC
+  }
+
+  package "Empresa de transporte" #FFF7E0 {
+    usecase "Cargar flota /\nrutas (CSV)"    as UC_CSV #FFF2CC
+    usecase "Editar / cancelar\nrutas"       as UC_RUT #FFF2CC
+    usecase "Generar cupones\n(empresa)"     as UC_GCU2 #FFF2CC
+    usecase "Reportes PDF\nde la empresa"    as UC_RPE #FFF2CC
+    usecase "Generar cupón\n{abstract}"      as UC_GCUP #FBF3D6
+  }
+
+  package "Administración" #FFF1E0 {
+    usecase "Aprobar / rechazar\noperadores"  as UC_APO #FFE6CC
+    usecase "Agendar reunión\ncon empresa"    as UC_REU #FFE6CC
+    usecase "Gestionar y\nvetar usuarios"     as UC_VET #FFE6CC
+    usecase "Resolver reportes\ny sancionar"  as UC_SAN #FFE6CC
+    usecase "Aprobar cambios\nde perfil"      as UC_ACP #FFE6CC
+    usecase "Registrar\nadministradores"      as UC_RAD #FFE6CC
+    usecase "Reportes y\ngráficas PDF"        as UC_RGA #FFE6CC
+  }
+}
+
+' ===== Asociaciones del Usuario base (heredadas por todos) =====
+USER --> UC_REG
+USER --> UC_LOGIN
+USER --> UC_PERF
+
+' ===== Cliente =====
+CLI --> UC_BENV
+CLI --> UC_BTRA
+CLI --> UC_RES
+CLI --> UC_CAR
+CLI --> UC_TAR
+CLI --> UC_PAGO
+CLI --> UC_CAL
+CLI --> UC_CUP
+CLI --> UC_REP
+
+' ===== Operador =====
+OPE --> UC_GSE
+OPE --> UC_SUS
+OPE --> UC_RC
+OPE --> UC_CAL2
+OPE --> UC_GCU
+OPE --> UC_RCL
+OPE --> UC_RPO
+
+' ===== Empresa =====
+EMP --> UC_CSV
+EMP --> UC_RUT
+EMP --> UC_GCU2
+EMP --> UC_RPE
+
+' ===== Administrador =====
+ADM --> UC_APO
+ADM --> UC_REU
+ADM --> UC_VET
+ADM --> UC_SAN
+ADM --> UC_ACP
+ADM --> UC_RAD
+ADM --> UC_RGA
+
+' ===== Actores externos (sistemas) =====
+MAIL --> UC_CONF
+MAIL --> UC_2FA
+MAIL --> UC_APO
+MAIL --> UC_REU
+PAY  --> UC_PAGO
+
+' ===== include / extend =====
+UC_REG  ..> UC_CONF  : <<include>>
+UC_LOGIN ..> UC_2FA  : <<extend>>\n(solo admin)
+UC_RES  ..> UC_PAGO  : <<include>>
+UC_RES  ..> UC_CAR   : <<extend>>
+UC_PAGO ..> UC_TAR   : <<include>>
+UC_SAN  ..> UC_VET   : <<extend>>\n(si procede)
+
+' ===== Generalización de casos de uso =====
+UC_GCU  --|> UC_GCUP
+UC_GCU2 --|> UC_GCUP
+
+@enduml
